@@ -39,6 +39,7 @@
             // textBox1
             // 
             this.textBox1.BackColor = System.Drawing.SystemColors.Window;
+            this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox1.Location = new System.Drawing.Point(12, 51);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
@@ -54,6 +55,7 @@
             this.textBox2.Size = new System.Drawing.Size(422, 20);
             this.textBox2.TabIndex = 1;
             this.textBox2.TextChanged += new System.EventHandler(this.textBox2_TextChanged);
+            this.textBox2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox2_KeyPress);
             // 
             // button1
             // 

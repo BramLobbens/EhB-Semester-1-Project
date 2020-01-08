@@ -87,16 +87,16 @@ namespace SocketServer
 
                             i = stream.Read(bytes, 0, bytes.Length);
                         }
-
-                        //stream.Flush(); // needed?
-
+                        
                         // Shutdown and end connection
                         client.Close();
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
+#if DEBUG
                         Console.WriteLine("Inside Exception");
+#endif
                     }
                 }
             }

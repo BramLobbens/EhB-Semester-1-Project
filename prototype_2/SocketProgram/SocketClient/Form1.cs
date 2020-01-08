@@ -61,7 +61,7 @@ namespace SocketClient
             var sb = new StringBuilder();
 
             // Send to server
-            Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+            byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
 
             try
             {
@@ -72,13 +72,17 @@ namespace SocketClient
                  */
                 stream.Write(data, 0, data.Length);
 
-                sb.AppendLine($"{DateTime.Now} Client: {message}");
+                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] Client: {message}");
 
                 // Get server response
+                /*
+                * note: not working correctly
+                * read: https://docs.microsoft.com/en-us/dotnet/api/system.net.sockets.tcpclient?view=netframework-4.8
+                */
                 stream.Read(data, 0, data.Length);
                 string serverMessage = System.Text.Encoding.ASCII.GetString(data);
 
-                sb.AppendLine($"{DateTime.Now} Server: {serverMessage}");
+                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] Server: {serverMessage}");
             }
             catch (Exception ex)
             {
@@ -91,12 +95,18 @@ namespace SocketClient
 
         private void button1_Click(object sender, EventArgs e)
         {
-            message = textBox2.Text;
-
-            Communicate();
-            textBox2.Clear();
+            HandleMessage(sender, e);
         }
 
+        private void HandleMessage(object sender, EventArgs e)
+        {
+            message = textBox2.Text;
+            if (message != "")
+            {
+                Communicate();
+                textBox2.Clear();
+            }
+        }
         private void button2_Click(object sender, EventArgs e)
         {
             if (client != null && client.Connected)
@@ -114,6 +124,15 @@ namespace SocketClient
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
             button1.Enabled = textBox2.Text != "";
+        }
+
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                HandleMessage(sender, e);
+                e.Handled = true; // suppress ding sound
+            }
         }
     }
 }
