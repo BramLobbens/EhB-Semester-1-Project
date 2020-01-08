@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SocketClient.Properties {
+namespace SocketServer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
@@ -37,9 +37,8 @@ namespace SocketClient.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\lobbe\\OneDrive\\Docum" +
-            "ents\\ErasmusHogeschool\\Project\\prototype_2\\SocketProgram\\SocketServer\\ProjectDb_" +
-            "BramLocal.mdf;Integrated Security=True;Connect Timeout=30")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\ProjectDb_Bra" +
+            "mLocal.mdf;Integrated Security=True;Connect Timeout=30")]
         public string ProjectDb_BramLocalConnectionString {
             get {
                 return ((string)(this["ProjectDb_BramLocalConnectionString"]));

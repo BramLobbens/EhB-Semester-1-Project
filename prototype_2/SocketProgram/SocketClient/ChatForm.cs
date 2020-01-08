@@ -12,14 +12,14 @@ using System.Windows.Forms;
 
 namespace SocketClient
 {
-    public partial class Form1 : Form
+    public partial class ChatForm : Form
     {
         TcpClient client;
         /*
          * note: will fail to load form if message not initialised
          */
         string message = "hello";
-        public Form1()
+        public ChatForm()
         {
             InitializeComponent();
             label1.Text = "Disconnected from server...";

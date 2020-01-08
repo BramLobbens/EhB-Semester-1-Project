@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -12,9 +14,62 @@ namespace SocketServer
     {
         private const string hostName = "127.0.0.1";
         private const int port = 8888;
+        public static string ConnectionString { get; set; }
+
+        static void CreateDbConnection()
+        {
+            /*
+             * Set DbConnectionstring
+             */
+            ConnectionString = SocketServer.Properties.Settings.Default.ProjectDb_BramConnectionString;
+        }
+
+        static List<string> GetUsersFromDB()
+        {
+            using (var connection = new SqlConnection(ConnectionString))
+            {
+                var users = new List<string>();
+                var adapter = new SqlDataAdapter();
+
+                try
+                {
+                    var command = new SqlCommand("select [UserName]" +
+                                                " from [Users]" +
+                                                " order by [OnlineStatus]",
+                                                connection);
+                    // Open connection
+                    connection.Open();
+
+                    // Read SelectQuery results and append to StringBuilder object
+                    using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
+                    {
+                        while (reader.Read())
+                        {
+                            users.Add(reader[0].ToString());
+                        }
+                    }
+                }
+                catch (Exception err)
+                {
+                    Console.WriteLine(err.Message);
+                }
+
+                return users;
+            }
+        }
 
         static void Main(string[] args)
         {
+            // Create connection with Database
+            CreateDbConnection();
+
+            // Get users from Database
+            foreach (var user in GetUsersFromDB())
+            {
+                Console.WriteLine(user);
+            }
+
+            // 
             IPHostEntry host = Dns.GetHostEntry(hostName);
             
             // Get IPv4 address back of host machine

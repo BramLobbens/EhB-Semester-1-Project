@@ -16,7 +16,10 @@ namespace SocketClient
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+
+            var form = new MainForm();
+            form.ConnectionString = SocketClient.Properties.Settings.Default.ProjectDb_BramConnectionString;
+            Application.Run(form);
         }
     }
 }
