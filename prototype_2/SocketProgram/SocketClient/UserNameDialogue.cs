@@ -13,6 +13,7 @@ namespace SocketClient
     public partial class UserNameDialogue : Form
     {
         public string UserName { get; set; }
+        public int Port { get; set; }
         public UserNameDialogue()
         {
             InitializeComponent();
@@ -21,6 +22,12 @@ namespace SocketClient
         private void button1_Click(object sender, EventArgs e)
         {
             UserName = textBox1.Text.Trim();
+            Port = (int) portValue.Value;
+        }
+
+        private void portValue_Enter(object sender, EventArgs e)
+        {
+            portValue.Select(0, portValue.Text.Length);
         }
     }
 }

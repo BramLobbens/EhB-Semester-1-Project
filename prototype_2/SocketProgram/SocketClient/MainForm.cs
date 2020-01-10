@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net.Sockets;
@@ -18,19 +19,18 @@ namespace SocketClient
         {
             public string UserName { get; set; }
             public bool OnlineStatus { get; set; }
+            public int Port { get; set; }
         }
 
         public string ConnectionString { get; set; }
         public List<User> Users { get; set; }
         public string CurrentUserName { get; set; }
-        TcpClient client;
+        public int CurrentPort { get; set; }
 
         public MainForm()
         {
             InitializeComponent();
             this.FormClosing += MainForm_FormClosing;
-
-            client = null;
             Users = new List<User>();
         }
 
@@ -39,12 +39,11 @@ namespace SocketClient
             using (var connection = new SqlConnection(ConnectionString))
             {
                 var users = new List<User>();
-                var adapter = new SqlDataAdapter();
-
                 try
                 {
                     var command = new SqlCommand("select [UserName]" +
                                                 " , [OnlineStatus]" +
+                                                " , [Port]" +
                                                 " from [Users]",
                                                 connection);
                     // Open connection
@@ -57,7 +56,8 @@ namespace SocketClient
                         {
                             string userName = reader[0].ToString();
                             bool onlineStatus = reader.GetBoolean(1);
-                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus });
+                            int port = int.Parse(reader[2].ToString());
+                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port });
                         }
                     }
                 }
@@ -70,20 +70,20 @@ namespace SocketClient
             }
         }
 
-        private void SetUserInDB(string userName, bool status)
+        private void SetUserInDB(string userName, bool status, int port)
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
-                var adapter = new SqlDataAdapter();
                 try
                 {
-                    var command = new SqlCommand("insert into [Users] ([Username], [OnlineStatus])" +
-                                                " values (@UserName, @Status)",
+                    var command = new SqlCommand("insert into [Users] ([Username], [OnlineStatus], [Port])" +
+                                                " values (@UserName, @Status, @Port)",
                                                 connection);
 
                     // Define parameters and their values
                     command.Parameters.AddWithValue("@UserName", userName);
                     command.Parameters.AddWithValue("@Status", status);
+                    command.Parameters.AddWithValue("@Port", port);
 
                     // Open connection and execute INSERT
                     connection.Open();
@@ -100,10 +100,9 @@ namespace SocketClient
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
-                var adapter = new SqlDataAdapter();
                 try
                 {
-                    var command = new SqlCommand("update [Users])" +
+                    var command = new SqlCommand("update [Users].[OnlinStatus])" +
                                                 " set [OnlineStatus] = @Status" +
                                                 " where [UserName] = @UserName",
                                                 connection);
@@ -132,6 +131,8 @@ namespace SocketClient
                 if (dialogResult == DialogResult.OK)
                 {
                     CurrentUserName = form.UserName;
+                    CurrentPort = form.Port;
+
                     // Load users from Database
                     Users.AddRange(GetUsersFromDB());
 
@@ -139,7 +140,7 @@ namespace SocketClient
                     if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == true))
                     {
                         CurrentUserName += new Random().Next(11, 999);
-                        SetUserInDB(CurrentUserName, true);
+                        SetUserInDB(CurrentUserName, true, CurrentPort);
                     }
                     // If user name exists, but user is offline, the current user can use this name.
                     else if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == false))
@@ -149,7 +150,7 @@ namespace SocketClient
                     // Set as new user
                     else
                     {
-                        SetUserInDB(CurrentUserName, true);
+                        SetUserInDB(CurrentUserName, true, CurrentPort);
                     }
                 }
                 else if (dialogResult == DialogResult.Cancel)
@@ -158,6 +159,19 @@ namespace SocketClient
                     this.Close();
                 }
             }
+        }
+
+        private void RefreshViewList()
+        {
+            listView1.Clear();
+            Users.Clear();
+            // Load users from Database
+            Users.AddRange(GetUsersFromDB());
+            // Sort by online status
+            List<User> sortedByStatus = Users.OrderByDescending(user => user.OnlineStatus).ToList();
+            sortedByStatus.ForEach(user => listView1.Items.Add($"{user.UserName} ({(user.OnlineStatus ? "Online" : "Offline")})"));
+            // Update view
+            listView1.Refresh();
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -170,62 +184,49 @@ namespace SocketClient
                 userNameLabel.Text += " " + CurrentUserName;
             }
 
-            // Clear possible cache of user names
-            Users.Clear();
-            // Load users from Database
-            Users.AddRange(GetUsersFromDB());
-            // Sort by online status
-            List<User> sortedByStatus = Users.OrderByDescending(user => user.OnlineStatus).ToList(); // LINQ
-            sortedByStatus.ForEach(user => listView1.Items.Add($"{user.UserName} ({(user.OnlineStatus ? "Online" : "Offline")})"));
-            // Update view
-            listView1.Refresh();
+            button2.Text = "Refresh";
+            RefreshViewList();
 
-            // TCP Connection
             try
             {
-                client = new TcpClient("127.0.0.1", 8888);
-                toolStripStatusLabel1.Text = "Connected with server...";
-                button2.Text = "Disconnect";
+                using (var process = new Process())
+                {
+                    ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
+                    info.UseShellExecute = false;
+                    info.Arguments = $"{CurrentPort}";
+                    Process.Start(info);
+
+                    toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
+                }
             }
-            catch (SocketException ex)
+            catch (System.ComponentModel.Win32Exception err)
             {
-                Console.WriteLine($"Socket Exception: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine(err.Message);
             }
 
-            /*
-             * testing purposes
-             */
-            //var chatForm = new Form1();
-            //chatForm.MdiParent = this;
-
-            //splitContainer1.Panel2.Controls.Add(chatForm);
-            //chatForm.Show();
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            try
-            {
-                if (client != null && client.Connected)
-                {
-                    client.Close();
-                    button2.Text = "Connect";
-                    toolStripStatusLabel1.Text = "Disconnected from server...";
-                    listView1.Clear();
-                }
-                else
-                {
-                    Form2_Load(sender, e);
-                }
-            }
-            catch (NullReferenceException err)
-            {
-                Form2_Load(sender, e);
-            }
+            RefreshViewList();
+            //try
+            //{
+            //    if (client != null && client.Connected)
+            //    {
+            //        client.Close();
+            //        button2.Text = "Connect";
+            //        toolStripStatusLabel1.Text = "Disconnected from server...";
+            //        listView1.Clear();
+            //    }
+            //    else
+            //    {
+            //        Form2_Load(sender, e);
+            //    }
+            //}
+            //catch (NullReferenceException err)
+            //{
+            //    Form2_Load(sender, e);
+            //}
         }
 
         private void MainForm_FormClosing(Object sender, EventArgs e)
@@ -237,6 +238,33 @@ namespace SocketClient
         private void button1_Click(object sender, EventArgs e)
         {
             MainForm_FormClosing(sender, e);
+        }
+
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+            // Get selected username from ViewList
+            var otherUserName = listView1.SelectedItems[0].Text.Split()[0];
+
+            // Dereference selected username's port
+            var otherUserPort = Users.Find(user => user.UserName.Equals(otherUserName)).Port;
+
+            // Open client to other user
+            try
+            {
+                var chatForm = new ChatForm(otherUserPort);
+                chatForm.MdiParent = this;
+                splitContainer1.Panel2.Controls.Add(chatForm);
+                chatForm.Show();
+            }
+            catch (SocketException ex)
+            {
+                Console.WriteLine($"Socket Exception: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
         }
     }
 }

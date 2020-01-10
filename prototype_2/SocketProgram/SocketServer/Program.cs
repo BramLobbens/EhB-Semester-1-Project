@@ -13,68 +13,28 @@ namespace SocketServer
     class Program
     {
         private const string hostName = "127.0.0.1";
-        private const int port = 8888;
-        public static string ConnectionString { get; set; }
-
-        static void CreateDbConnection()
-        {
-            /*
-             * Set DbConnectionstring
-             */
-            ConnectionString = SocketServer.Properties.Settings.Default.ProjectDb_BramConnectionString;
-        }
-
-        static List<string> GetUsersFromDB()
-        {
-            using (var connection = new SqlConnection(ConnectionString))
-            {
-                var users = new List<string>();
-                var adapter = new SqlDataAdapter();
-
-                try
-                {
-                    var command = new SqlCommand("select [UserName]" +
-                                                " from [Users]" +
-                                                " order by [OnlineStatus]",
-                                                connection);
-                    // Open connection
-                    connection.Open();
-
-                    // Read SelectQuery results and append to StringBuilder object
-                    using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
-                    {
-                        while (reader.Read())
-                        {
-                            users.Add(reader[0].ToString());
-                        }
-                    }
-                }
-                catch (Exception err)
-                {
-                    Console.WriteLine(err.Message);
-                }
-
-                return users;
-            }
-        }
+        private static int Port { get; set; }
 
         static void Main(string[] args)
         {
-            // Create connection with Database
-            CreateDbConnection();
-
-            // Get users from Database
-            foreach (var user in GetUsersFromDB())
-            {
-                Console.WriteLine(user);
-            }
-
-            // 
+            // Set Host
             IPHostEntry host = Dns.GetHostEntry(hostName);
             
             // Get IPv4 address back of host machine
             IPAddress ipAddress = host.AddressList
                 .FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+
+            // Set Port
+            int defaultPort = 8888;
+            try
+            {
+                Port = int.Parse(args[0]);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{e.Message} Default port set at {defaultPort}");
+                Port = defaultPort;
+            }
 
             /*
              * research notes: alternatively use the following
@@ -94,10 +54,10 @@ namespace SocketServer
                  * research notes: currently not working with ipAddress from AddressList
                  */
                 IPAddress tmp_address = IPAddress.Parse(hostName);
-                var server = new TcpListener(tmp_address, port);
+                var server = new TcpListener(tmp_address, Port);
 
                 server.Start();
-                Console.WriteLine($"Listening on address: {ipAddress}, port: {port}");
+                Console.WriteLine($"Listening on address: {ipAddress}, port: {Port}");
 
                 // Buffer
                 byte[] bytes = new byte[1024];

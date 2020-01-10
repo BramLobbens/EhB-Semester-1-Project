@@ -15,6 +15,7 @@ namespace SocketClient
     public partial class ChatForm : Form
     {
         TcpClient client;
+        public int Port { get; set; }
         /*
          * note: will fail to load form if message not initialised
          */
@@ -26,18 +27,20 @@ namespace SocketClient
             button2.Text = "Connect";
         }
 
+        public ChatForm(int port) : this()
+        {
+            Port = port;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             // Initialise send button
             button1.Enabled = (textBox2.Text == "") ? false : true;
 
-            // -> show message
             // Connect
-            //clientSocket.Connect("127.0.0.1", 8888);
             try
             {
-                client = new TcpClient("127.0.0.1", 8888);
-                //clientSocket = new TcpClient("196.168.1.6", 8888);
+                client = new TcpClient("127.0.0.1", Port);
                 label1.Text = "Connected with server...";
                 button2.Text = "Disconnect";
                 Communicate();
