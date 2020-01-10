@@ -34,6 +34,37 @@ namespace SocketClient
             Users = new List<User>();
         }
 
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            if (CurrentUserName == null)
+            {
+                // Open dialog
+                SetUserName();
+                // Update view
+                userNameLabel.Text += " " + CurrentUserName;
+            }
+
+            button2.Text = "Refresh";
+            RefreshViewList();
+
+            try
+            {
+                using (var process = new Process())
+                {
+                    ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
+                    info.UseShellExecute = false;
+                    info.Arguments = $"{CurrentPort}";
+                    Process.Start(info);
+
+                    toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
+                }
+            }
+            catch (System.ComponentModel.Win32Exception err)
+            {
+                Console.WriteLine(err.Message);
+            }
+        }
+
         private List<User> GetUsersFromDB()
         {
             using (var connection = new SqlConnection(ConnectionString))
@@ -167,8 +198,15 @@ namespace SocketClient
                 }
                 else if (dialogResult == DialogResult.Cancel)
                 {
-                    MessageBox.Show("Goodbye.");
-                    this.Close();
+                    DialogResult d = MessageBox.Show("Are you sure you want quit?", "Are you sure?", MessageBoxButtons.YesNo);
+                    if (d == DialogResult.Yes)
+                    {
+                        this.Close();
+                    }
+                    else if (d == DialogResult.No)
+                    {
+                        SetUserName();
+                    }
                 }
             }
         }
@@ -186,73 +224,7 @@ namespace SocketClient
             listView1.Refresh();
         }
 
-        private void Form2_Load(object sender, EventArgs e)
-        {
-            if (CurrentUserName == null)
-            {
-                // Open dialog
-                SetUserName();
-                // Update view
-                userNameLabel.Text += " " + CurrentUserName;
-            }
-
-            button2.Text = "Refresh";
-            RefreshViewList();
-
-            try
-            {
-                using (var process = new Process())
-                {
-                    ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
-                    info.UseShellExecute = false;
-                    info.Arguments = $"{CurrentPort}";
-                    Process.Start(info);
-
-                    toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
-                }
-            }
-            catch (System.ComponentModel.Win32Exception err)
-            {
-                Console.WriteLine(err.Message);
-            }
-
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            RefreshViewList();
-            //try
-            //{
-            //    if (client != null && client.Connected)
-            //    {
-            //        client.Close();
-            //        button2.Text = "Connect";
-            //        toolStripStatusLabel1.Text = "Disconnected from server...";
-            //        listView1.Clear();
-            //    }
-            //    else
-            //    {
-            //        Form2_Load(sender, e);
-            //    }
-            //}
-            //catch (NullReferenceException err)
-            //{
-            //    Form2_Load(sender, e);
-            //}
-        }
-
-        private void MainForm_FormClosing(Object sender, EventArgs e)
-        {
-            UpdateUserInDB(CurrentUserName, false, null);
-            Application.Exit();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            MainForm_FormClosing(sender, e);
-        }
-
-        private void listView1_DoubleClick(object sender, EventArgs e)
+        private void UserListView_DoubleClick(object sender, EventArgs e)
         {
             // Get selected username from ViewList
             string otherUserName = listView1.SelectedItems[0].Text.Split()[0];
@@ -271,17 +243,28 @@ namespace SocketClient
                     splitContainer1.Panel2.Controls.Add(chatForm);
                     chatForm.Show();
                 }
-                
-            }
-            catch (SocketException ex)
-            {
-                Console.WriteLine($"Socket Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                Console.WriteLine($"{ex.Message}");
             }
-            
+
+        }
+
+        private void RefreshButton_Click(object sender, EventArgs e)
+        {
+            RefreshViewList();
+        }
+
+        private void ExitButton_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void MainForm_FormClosing(Object sender, EventArgs e)
+        {
+            UpdateUserInDB(CurrentUserName, false, null);
+            Application.Exit();
         }
     }
 }

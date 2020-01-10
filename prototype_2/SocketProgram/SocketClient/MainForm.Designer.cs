@@ -61,14 +61,15 @@
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-            this.fileToolStripMenuItem.Text = "File";
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
+            this.fileToolStripMenuItem.Text = "Program";
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(93, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.MainForm_FormClosing);
             // 
             // button1
             // 
@@ -78,7 +79,7 @@
             this.button1.TabIndex = 7;
             this.button1.Text = "Exit";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.button1.Click += new System.EventHandler(this.ExitButton_Click);
             // 
             // button2
             // 
@@ -88,7 +89,7 @@
             this.button2.TabIndex = 8;
             this.button2.Text = "Disconnect";
             this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.button2.Click += new System.EventHandler(this.RefreshButton_Click);
             // 
             // splitContainer1
             // 
@@ -107,7 +108,7 @@
             this.splitContainer1.Panel1.Controls.Add(this.button1);
             this.splitContainer1.Panel1.Controls.Add(this.button2);
             this.splitContainer1.Size = new System.Drawing.Size(1003, 627);
-            this.splitContainer1.SplitterDistance = 223;
+            this.splitContainer1.SplitterDistance = 222;
             this.splitContainer1.TabIndex = 9;
             // 
             // userNameLabel
@@ -135,7 +136,7 @@
             this.toolStripStatusLabel1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 605);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(223, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(222, 22);
             this.statusStrip1.TabIndex = 10;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -156,7 +157,7 @@
             this.listView1.TabIndex = 9;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.List;
-            this.listView1.DoubleClick += new System.EventHandler(this.listView1_DoubleClick);
+            this.listView1.DoubleClick += new System.EventHandler(this.UserListView_DoubleClick);
             // 
             // MainForm
             // 
@@ -169,7 +170,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "MainForm";
             this.Text = "Form2";
-            this.Load += new System.EventHandler(this.Form2_Load);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.splitContainer1.Panel1.ResumeLayout(false);
