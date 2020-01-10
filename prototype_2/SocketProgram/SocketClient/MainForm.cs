@@ -19,7 +19,7 @@ namespace SocketClient
         {
             public string UserName { get; set; }
             public bool OnlineStatus { get; set; }
-            public int Port { get; set; }
+            public int? Port { get; set; }
         }
 
         public string ConnectionString { get; set; }
@@ -49,14 +49,24 @@ namespace SocketClient
                     // Open connection
                     connection.Open();
 
-                    // Execute query
+                    // Execute SELECT
                     using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
                     {
                         while (reader.Read())
                         {
                             string userName = reader[0].ToString();
                             bool onlineStatus = reader.GetBoolean(1);
-                            int port = int.Parse(reader[2].ToString());
+                            int number;
+                            int? port;
+                            if (Int32.TryParse(reader[2].ToString(), out number))
+                            {
+                                port = number;
+                            }
+                            else
+                            {
+                                port = null;
+                            }
+                            
                             users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port });
                         }
                     }
@@ -96,22 +106,24 @@ namespace SocketClient
             }
         }
 
-        private void UpdateUserInDB(string userName, bool status)
+        private void UpdateUserInDB(string userName, bool status, int? port)
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
                 try
                 {
-                    var command = new SqlCommand("update [Users].[OnlinStatus])" +
-                                                " set [OnlineStatus] = @Status" +
+                    var command = new SqlCommand("update [Users]" +
+                                                " set [OnlineStatus] = @Status," +
+                                                " [Port] = @Port" +
                                                 " where [UserName] = @UserName",
                                                 connection);
 
                     // Define parameters and their values
                     command.Parameters.AddWithValue("@UserName", userName);
                     command.Parameters.AddWithValue("@Status", status);
+                    command.Parameters.AddWithValue("@Port", (object)port ?? DBNull.Value);
 
-                    // Open connection and execute INSERT
+                    // Open connection and execute UPDATE
                     connection.Open();
                     command.ExecuteNonQuery();
                 }
@@ -145,7 +157,7 @@ namespace SocketClient
                     // If user name exists, but user is offline, the current user can use this name.
                     else if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == false))
                     {
-                        UpdateUserInDB(CurrentUserName, true);
+                        UpdateUserInDB(CurrentUserName, true, CurrentPort);
                     }
                     // Set as new user
                     else
@@ -169,7 +181,7 @@ namespace SocketClient
             Users.AddRange(GetUsersFromDB());
             // Sort by online status
             List<User> sortedByStatus = Users.OrderByDescending(user => user.OnlineStatus).ToList();
-            sortedByStatus.ForEach(user => listView1.Items.Add($"{user.UserName} ({(user.OnlineStatus ? "Online" : "Offline")})"));
+            sortedByStatus.ForEach(user => listView1.Items.Add($"{user.UserName} ({(user.OnlineStatus ? "Online✅" : "Offline")})"));
             // Update view
             listView1.Refresh();
         }
@@ -231,7 +243,7 @@ namespace SocketClient
 
         private void MainForm_FormClosing(Object sender, EventArgs e)
         {
-            UpdateUserInDB(CurrentUserName, false);
+            UpdateUserInDB(CurrentUserName, false, null);
             Application.Exit();
         }
 
@@ -243,18 +255,23 @@ namespace SocketClient
         private void listView1_DoubleClick(object sender, EventArgs e)
         {
             // Get selected username from ViewList
-            var otherUserName = listView1.SelectedItems[0].Text.Split()[0];
+            string otherUserName = listView1.SelectedItems[0].Text.Split()[0];
 
             // Dereference selected username's port
-            var otherUserPort = Users.Find(user => user.UserName.Equals(otherUserName)).Port;
+            int? otherUserPort = Users.Find(user => user.UserName.Equals(otherUserName)).Port;
 
             // Open client to other user
             try
             {
-                var chatForm = new ChatForm(otherUserPort);
-                chatForm.MdiParent = this;
-                splitContainer1.Panel2.Controls.Add(chatForm);
-                chatForm.Show();
+                if (otherUserPort != null)
+                {
+                    int port = (int)otherUserPort;
+                    var chatForm = new ChatForm(port);
+                    chatForm.MdiParent = this;
+                    splitContainer1.Panel2.Controls.Add(chatForm);
+                    chatForm.Show();
+                }
+                
             }
             catch (SocketException ex)
             {
