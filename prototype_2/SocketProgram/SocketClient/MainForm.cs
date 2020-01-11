@@ -38,31 +38,39 @@ namespace SocketClient
         {
             if (CurrentUserName == null)
             {
-                // Open dialog
-                SetUserName();
-                // Update view
-                userNameLabel.Text += " " + CurrentUserName;
-            }
-
-            button2.Text = "Refresh";
-            RefreshViewList();
-
-            try
-            {
-                using (var process = new Process())
+                try
                 {
-                    ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
-                    info.UseShellExecute = false;
-                    info.Arguments = $"{CurrentPort}";
-                    Process.Start(info);
-
+                    // Open dialog
+                    SetUserName();
+                    // Update view
+                    userNameLabel.Text += " " + CurrentUserName;
+                    RefreshViewList();
                     toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    MessageBox.Show($"Error: Could not connect to database.");
+                    button2.Enabled = false;
+                }
             }
-            catch (System.ComponentModel.Win32Exception err)
-            {
-                Console.WriteLine(err.Message);
-            }
+          
+            //try
+            //{
+            //    using (var process = new Process())
+            //    {
+            //        ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
+            //        info.UseShellExecute = false;
+            //        info.Arguments = $"{CurrentPort}";
+            //        Process.Start(info);
+
+            //        toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
+            //    }
+            //}
+            //catch (System.ComponentModel.Win32Exception err)
+            //{
+            //    Console.WriteLine(err.Message);
+            //}
         }
 
         private List<User> GetUsersFromDB()
@@ -102,9 +110,10 @@ namespace SocketClient
                         }
                     }
                 }
-                catch (Exception err)
+                catch (Exception ex)
                 {
-                    Console.WriteLine(err.Message);
+                    Console.WriteLine(ex.Message);
+                    throw new Exception();
                 }
 
                 return users;
@@ -133,6 +142,7 @@ namespace SocketClient
                 catch (Exception err)
                 {
                     Console.WriteLine(err.Message);
+                    throw new Exception();
                 }
             }
         }
@@ -161,6 +171,7 @@ namespace SocketClient
                 catch (Exception err)
                 {
                     Console.WriteLine(err.Message);
+                    throw new Exception();
                 }
             }
         }
@@ -169,32 +180,42 @@ namespace SocketClient
         {
             using (var form = new UserNameDialogue())
             {
-                // Verkrijg de gekozen dialoogvenster waarde en verkrijg de waarde als de gebruiker voor OK heeft gekozen
+
+                // Get dialog result and get value when user chose OK
                 DialogResult dialogResult = form.ShowDialog();
                 if (dialogResult == DialogResult.OK)
                 {
                     CurrentUserName = form.UserName;
                     CurrentPort = form.Port;
 
-                    // Load users from Database
-                    Users.AddRange(GetUsersFromDB());
+                    try
+                    {
+                        // Load users from Database
+                        Users.AddRange(GetUsersFromDB());
 
-                    // If user name already exists, pad with random digits to make unique
-                    if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == true))
-                    {
-                        CurrentUserName += new Random().Next(11, 999);
-                        SetUserInDB(CurrentUserName, true, CurrentPort);
+                        // If user name already exists, pad with random digits to make unique
+                        if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == true))
+                        {
+                            CurrentUserName += new Random().Next(11, 999);
+                            SetUserInDB(CurrentUserName, true, CurrentPort);
+                        }
+                        // If user name exists, but user is offline, the current user can use this name.
+                        else if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == false))
+                        {
+                            UpdateUserInDB(CurrentUserName, true, CurrentPort);
+                        }
+                        // Set as new user
+                        else
+                        {
+                            SetUserInDB(CurrentUserName, true, CurrentPort);
+                        }
                     }
-                    // If user name exists, but user is offline, the current user can use this name.
-                    else if (Users.Any(user => user.UserName.Equals(CurrentUserName) && user.OnlineStatus == false))
+                    catch (Exception ex)
                     {
-                        UpdateUserInDB(CurrentUserName, true, CurrentPort);
+                        Console.WriteLine(ex.Message);
+                        throw new Exception();
                     }
-                    // Set as new user
-                    else
-                    {
-                        SetUserInDB(CurrentUserName, true, CurrentPort);
-                    }
+
                 }
                 else if (dialogResult == DialogResult.Cancel)
                 {
@@ -237,8 +258,9 @@ namespace SocketClient
             {
                 if (otherUserPort != null)
                 {
-                    int port = (int)otherUserPort;
-                    var chatForm = new ChatForm(port);
+                    int clientPort = (int)otherUserPort;
+                    int serverPort = CurrentPort;
+                    var chatForm = new ChatForm(otherUserName, clientPort, serverPort);
                     chatForm.MdiParent = this;
                     splitContainer1.Panel2.Controls.Add(chatForm);
                     chatForm.Show();
@@ -248,7 +270,6 @@ namespace SocketClient
             {
                 Console.WriteLine($"{ex.Message}");
             }
-
         }
 
         private void RefreshButton_Click(object sender, EventArgs e)
@@ -263,8 +284,48 @@ namespace SocketClient
 
         private void MainForm_FormClosing(Object sender, EventArgs e)
         {
-            UpdateUserInDB(CurrentUserName, false, null);
-            Application.Exit();
+            try
+            {
+                UpdateUserInDB(CurrentUserName, false, null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                // Silent
+            }
+            finally
+            {
+                Application.Exit();
+            }
+        }
+
+        /*
+         * Menu Toolstrip Section
+         */
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Programmeren 3 - School year 2019-2020");
+            sb.AppendLine("By Bram Lobbens");
+            sb.AppendLine("Latest update: 2020/01/11");
+            MessageBox.Show(sb.ToString(), "About");
+        }
+
+        private void backgroundToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var form = new ColorDialog())
+            {
+                DialogResult dialogResult = form.ShowDialog();
+                if (dialogResult == DialogResult.OK)
+                {
+                    splitContainer1.Panel2.BackColor = form.Color;
+                }
+            }
+        }
+
+        private void reportAProblemToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/BramLobbens/EhB-Semester-1-Project/issues");
         }
     }
 }

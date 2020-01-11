@@ -90,6 +90,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="UserNameDialogue.resx">
       <DependentUpon>UserNameDialogue.cs</DependentUpon>
@@ -134,6 +135,9 @@
       <Project>{429861ef-cedd-413b-9af3-b5fa305c3f22}</Project>
       <Name>SocketServer</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Comment_16x.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -15,7 +15,12 @@ namespace SocketClient
     public partial class ChatForm : Form
     {
         TcpClient client;
-        public int Port { get; set; }
+        TcpListener listener;
+        public int ClientPort { get; set; }
+        public int ServerPort { get; set; }
+        public string OtherUser { get; set; }
+        private const string hostName = "127.0.0.1";
+
         /*
          * note: will fail to load form if message not initialised
          */
@@ -23,40 +28,151 @@ namespace SocketClient
         public ChatForm()
         {
             InitializeComponent();
-            label1.Text = "Disconnected from server...";
-            button2.Text = "Connect";
+            topLabel.Text = "Connect with user...";
+            ConnectButton.Text = "Connect";
         }
 
-        public ChatForm(int port) : this()
+        public ChatForm(string userName, int clientPort, int serverPort) : this()
         {
-            Port = port;
+            OtherUser = userName;
+            ClientPort = clientPort;
+            ServerPort = serverPort;
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void ChatForm_Load(object sender, EventArgs e)
         {
             // Initialise send button
-            button1.Enabled = (textBox2.Text == "") ? false : true;
+            sendMessageButton.Enabled = (textBoxIn.Text == "") ? false : true;
 
             // Connect
             try
             {
-                client = new TcpClient("127.0.0.1", Port);
-                label1.Text = "Connected with server...";
-                button2.Text = "Disconnect";
-                Communicate();
+                //client = new TcpClient("127.0.0.1", ClientPort);
 
+                //label1.Text = $"Connected with {OtherUser}...";
+                //button2.Text = "Disconnect";
+                //Communicate();
+
+
+                // Set Host
+                IPHostEntry host = Dns.GetHostEntry(hostName);
+
+                // Get IPv4 address back of host machine
+                IPAddress ipAddress = host.AddressList
+                    .FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+                IPAddress tmp_address = IPAddress.Parse(hostName);
+                listener = new TcpListener(tmp_address, ServerPort);
+                listener.Start();
+
+                var sb = new StringBuilder();
+                sb.AppendLine($"// Listening for incoming messages on: {ServerPort}");
+                textBoxOut.AppendText(sb.ToString());
+
+                Foo();
+
+                //ServerListenLoop();
             }
             catch (SocketException ex)
             {
                 Console.WriteLine($"Socket Exception: {ex.Message}");
-                textBox1.Text = $"Socket Exception: {ex.Message}";
+                textBoxOut.AppendText($"Socket Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                textBox1.Text = ex.Message;
+                textBoxOut.AppendText(ex.Message);
             }
             
+        }
+        private async Task Foo()
+        {
+            var s = new StringBuilder();
+            TcpClient serverClient = await listener.AcceptTcpClientAsync();
+            s.AppendLine($"// Success, connection received.");
+            textBoxOut.AppendText(s.ToString());
+
+            //bool connected = false;
+            //while (!connected)
+            //{
+            //    try
+            //    {
+            //        var s = new StringBuilder();
+            //        if (!listener.Pending())
+            //        {
+                        
+            //            s.AppendLine($"// Sorry, not connection request received.");
+            //            textBoxOut.AppendText(s.ToString());
+            //        }
+            //        else
+            //        {
+            //            TcpClient serverClient = await listener.AcceptTcpClientAsync();
+            //            s.AppendLine($"// Success, connection received.");
+            //            textBoxOut.AppendText(s.ToString());
+            //            connected = true;
+            //        }
+
+            //        //System.Threading.Thread.Sleep(5000);
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine(ex.Message);
+            //    }
+                
+            //}
+        }
+        private void ServerListenLoop()
+        {
+
+            // Buffer
+            byte[] bytes = new byte[1024];
+            string data;
+
+            // Enter listening loop
+            while (true)
+            {
+                //Console.Write("Waiting for a connection... ");
+                // Perform a blocking call to accept requests.
+                TcpClient client = listener.AcceptTcpClient();
+
+                try
+                {
+                    /*
+                     * research notes: throws error when client closes connection
+                     */
+                    // Get a stream object for reading and writing
+                    NetworkStream stream = client.GetStream();
+
+                    int i;
+                    i = stream.Read(bytes, 0, bytes.Length);
+
+                    while (i != 0)
+                    {
+
+                        // Translate data bytes to a ASCII string.
+                        data = System.Text.Encoding.ASCII.GetString(bytes);
+                        Console.WriteLine($"Received: {data}");
+
+                        /*
+                         *  TO-DO: process data
+                         */
+                        data = data.ToUpper();
+                        byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+
+                        // Send back a response.
+                        stream.Write(msg, 0, msg.Length);
+                        Console.WriteLine($"Sent: {data}");
+
+                        i = stream.Read(bytes, 0, bytes.Length);
+                    }
+
+                    // Shutdown and end connection
+                    client.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
         }
 
         private void Communicate()
@@ -75,7 +191,7 @@ namespace SocketClient
                  */
                 stream.Write(data, 0, data.Length);
 
-                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] Client: {message}");
+                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] You: {message}");
 
                 // Get server response
                 /*
@@ -85,7 +201,7 @@ namespace SocketClient
                 stream.Read(data, 0, data.Length);
                 string serverMessage = System.Text.Encoding.ASCII.GetString(data);
 
-                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] Server: {serverMessage}");
+                sb.AppendLine($"[{DateTime.Now.ToString("hh:mm tt")}] {OtherUser}: {serverMessage}");
             }
             catch (Exception ex)
             {
@@ -93,43 +209,55 @@ namespace SocketClient
             }
 
             // Output to screen
-            textBox1.AppendText(sb.ToString());
+            textBoxOut.AppendText(sb.ToString());
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void SendMessageButton_Click(object sender, EventArgs e)
         {
             HandleMessage(sender, e);
         }
 
         private void HandleMessage(object sender, EventArgs e)
         {
-            message = textBox2.Text;
+            message = textBoxIn.Text;
             if (message != "")
             {
                 Communicate();
-                textBox2.Clear();
+                textBoxIn.Clear();
             }
         }
-        private void button2_Click(object sender, EventArgs e)
+        private async void ConnectButton_Click(object sender, EventArgs e)
         {
-            if (client != null && client.Connected)
+            var sb = new StringBuilder();
+            //if (client != null && client.Connected)
+            if (client != null)
             {
                 client.Close();
-                button2.Text = "Connect";
-                label1.Text = "Disconnected from server...";
+                client = null;
+                ConnectButton.Text = "Connect";
+                topLabel.Text = "Disconnected from user...";
+
+                sb.AppendLine($"// Disconnected with {OtherUser}");
+                textBoxOut.AppendText(sb.ToString());
             }
             else
             {
-                Form1_Load(sender, e);
+                client = new TcpClient("127.0.0.1", ClientPort);
+                sb.AppendLine($"// Success! Connected with {OtherUser} on {ClientPort}");
+                textBoxOut.AppendText(sb.ToString());
+
+                topLabel.Text = $"Connected with {OtherUser}";
+                ConnectButton.Text = "Disconnect";
+                //await Foo();
             }
         }
 
-        private void textBox2_TextChanged(object sender, EventArgs e)
+        private void TextBoxIn_TextChanged(object sender, EventArgs e)
         {
-            button1.Enabled = textBox2.Text != "";
+            sendMessageButton.Enabled = textBoxIn.Text != "";
         }
 
-        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        private void TextBoxIn_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == (char)Keys.Enter)
             {
