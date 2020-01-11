@@ -14,9 +14,18 @@ namespace SocketClient
     {
         public string UserName { get; set; }
         public int Port { get; set; }
+        private ToolTip PortToolTip { get; set; }
         public UserNameDialogue()
         {
             InitializeComponent();
+
+            // Set tooltip
+            PortToolTip = new ToolTip();
+            PortToolTip.ToolTipIcon = ToolTipIcon.Info;
+            PortToolTip.IsBalloon = true;
+            PortToolTip.ShowAlways = true;
+            PortToolTip.ToolTipTitle = "What is this?";
+            PortToolTip.SetToolTip(label2, "Selecting a port number enables you to connect with another user.");
         }
 
         private void button1_Click(object sender, EventArgs e)

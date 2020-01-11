@@ -20,6 +20,7 @@ namespace SocketClient
             public string UserName { get; set; }
             public bool OnlineStatus { get; set; }
             public int? Port { get; set; }
+            public DateTime? LastOnline { get; set; }
         }
 
         public string ConnectionString { get; set; }
@@ -54,23 +55,6 @@ namespace SocketClient
                     button2.Enabled = false;
                 }
             }
-          
-            //try
-            //{
-            //    using (var process = new Process())
-            //    {
-            //        ProcessStartInfo info = new ProcessStartInfo(@"SocketServer.exe");
-            //        info.UseShellExecute = false;
-            //        info.Arguments = $"{CurrentPort}";
-            //        Process.Start(info);
-
-            //        toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
-            //    }
-            //}
-            //catch (System.ComponentModel.Win32Exception err)
-            //{
-            //    Console.WriteLine(err.Message);
-            //}
         }
 
         private List<User> GetUsersFromDB()
@@ -83,6 +67,7 @@ namespace SocketClient
                     var command = new SqlCommand("select [UserName]" +
                                                 " , [OnlineStatus]" +
                                                 " , [Port]" +
+                                                " , [OnlineDate]" +
                                                 " from [Users]",
                                                 connection);
                     // Open connection
@@ -93,8 +78,13 @@ namespace SocketClient
                     {
                         while (reader.Read())
                         {
+                            // User Name
                             string userName = reader[0].ToString();
+
+                            // Online Status
                             bool onlineStatus = reader.GetBoolean(1);
+                            
+                            // Port
                             int number;
                             int? port;
                             if (Int32.TryParse(reader[2].ToString(), out number))
@@ -105,8 +95,12 @@ namespace SocketClient
                             {
                                 port = null;
                             }
-                            
-                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port });
+
+                            // Last Online Date
+                            int x = reader.GetOrdinal("OnlineDate");
+                            DateTime? onlineDate = reader.IsDBNull(x) ? (DateTime?)null : reader.GetDateTime(x);
+
+                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port, LastOnline = onlineDate });
                         }
                     }
                 }
@@ -155,7 +149,8 @@ namespace SocketClient
                 {
                     var command = new SqlCommand("update [Users]" +
                                                 " set [OnlineStatus] = @Status," +
-                                                " [Port] = @Port" +
+                                                " [Port] = @Port," +
+                                                " [OnlineDate] = @Date" +
                                                 " where [UserName] = @UserName",
                                                 connection);
 
@@ -163,6 +158,7 @@ namespace SocketClient
                     command.Parameters.AddWithValue("@UserName", userName);
                     command.Parameters.AddWithValue("@Status", status);
                     command.Parameters.AddWithValue("@Port", (object)port ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Date", DateTime.Now);
 
                     // Open connection and execute UPDATE
                     connection.Open();
@@ -240,7 +236,19 @@ namespace SocketClient
             Users.AddRange(GetUsersFromDB());
             // Sort by online status
             List<User> sortedByStatus = Users.OrderByDescending(user => user.OnlineStatus).ToList();
-            sortedByStatus.ForEach(user => listView1.Items.Add($"{user.UserName} ({(user.OnlineStatus ? "Online✅" : "Offline")})"));
+            // Format
+            foreach(User user in sortedByStatus)
+            {
+                var li = new ListViewItem((user.OnlineStatus) ? $"{user.UserName}" : $"{user.UserName} (offline)");
+                if (user.OnlineStatus)
+                {
+                    li.ForeColor = Color.FromArgb(32, 214, 4);
+                    li.Font = new Font("Microsoft Sans Serif", 10, FontStyle.Bold);
+                }
+                string date = (user.LastOnline != null) ? $"{user.LastOnline:yyyy/MM/dd}" : "unknown";
+                li.ToolTipText = $"{(user.OnlineStatus ? "" : $"User was last online on: {date}")}";
+                listView1.Items.Add(li);
+            }
             // Update view
             listView1.Refresh();
         }
@@ -277,25 +285,25 @@ namespace SocketClient
             RefreshViewList();
         }
 
-        private void ExitButton_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
         private void MainForm_FormClosing(Object sender, EventArgs e)
         {
             try
             {
-                UpdateUserInDB(CurrentUserName, false, null);
+                DialogResult dialogResult = MessageBox.Show("Are you sure you want quit?", "Are you sure?", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    UpdateUserInDB(CurrentUserName, false, null);
+                    Application.Exit();
+                }
+                else if (dialogResult == DialogResult.No)
+                {
+                    // Don't do anything
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 // Silent
-            }
-            finally
-            {
-                Application.Exit();
             }
         }
 
