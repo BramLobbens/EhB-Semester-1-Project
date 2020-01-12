@@ -30,6 +30,8 @@ namespace SocketClient
         public string CurrentUserName { get; set; }
         public int CurrentPort { get; set; }
 
+        public delegate void ViewListDelegate(string s);
+
         public MainForm()
         {
             InitializeComponent();
@@ -49,9 +51,10 @@ namespace SocketClient
                     // Update view
                     userNameLabel.Text += " " + CurrentUserName;
                     RefreshViewList();
-                    toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
+                    toolStripStatusLabelLeft.Text = $"Connected on port: {CurrentPort}";
                     tabControl1.TabPages[0].Text = "All";
                     tabControl1.TabPages[1].Text = "Favorites";
+                    tabControl1.TabPages[1].ToolTipText = "Set a user to your favorites tab by right-clicking on their name.";
                 }
                 catch (Exception ex)
                 {
@@ -272,6 +275,9 @@ namespace SocketClient
             Users.Clear();
             Favorites.Clear();
 
+            var messageHandler = new ViewListDelegate(Foo);
+            messageHandler("Tip: You can refresh your user list to see if anyone has come online.");
+
             // Load users from Database
             Users.AddRange(GetUsersFromDB());
             // Sort by online status
@@ -297,6 +303,8 @@ namespace SocketClient
                 var li = new ListViewItem((user.OnlineStatus) ? $"{user.UserName}" : $"{user.UserName} (offline)");
                 if (user.OnlineStatus)
                 {
+                    messageHandler("Notice: Favorites has changed.");
+
                     li.ForeColor = Color.FromArgb(32, 214, 4);
                     li.Font = new Font("Microsoft Sans Serif", 10, FontStyle.Bold);
                 }
@@ -308,6 +316,7 @@ namespace SocketClient
             // Update view
             listView1.Refresh();
             listView2.Refresh();
+
         }
 
         private void UserListView_DoubleClick(object sender, EventArgs e)
@@ -326,6 +335,7 @@ namespace SocketClient
                     int clientPort = (int)otherUserPort;
                     int serverPort = CurrentPort;
                     var chatForm = new ChatForm(otherUserName, clientPort, serverPort);
+
                     chatForm.MdiParent = this;
                     splitContainer1.Panel2.Controls.Add(chatForm);
                     chatForm.Show();
@@ -335,6 +345,11 @@ namespace SocketClient
             {
                 Console.WriteLine($"{ex.Message}");
             }
+        }
+
+        private void Foo(string message)
+        {
+            toolStripStatusLabelRight.Text = $"{message}";
         }
 
         private void RefreshButton_Click(object sender, EventArgs e)
@@ -369,8 +384,9 @@ namespace SocketClient
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Programmeren 3 - 2019-2020\n");
-            sb.AppendLine("Author: Bram Lobbens");
+            sb.AppendLine($"{Properties.Resources.ProjectName}");
+            sb.AppendLine();
+            sb.AppendLine($"Author: {Properties.Resources.Author}");
             sb.AppendLine($"Latest Build: {Properties.Resources.BuildDate}");
             MessageBox.Show(sb.ToString(), "About");
         }
@@ -389,7 +405,7 @@ namespace SocketClient
 
         private void reportAProblemToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("https://github.com/BramLobbens/EhB-Semester-1-Project/issues");
+            System.Diagnostics.Process.Start(Properties.Resources.ExternalLinkGitHub_Issues);
         }
 
         /*
@@ -399,7 +415,8 @@ namespace SocketClient
         {
             // Set selected user as a favorite
             var selectedUser = listView1.SelectedItems[0].Text.Split()[0];
-            UpdateUserInDB(selectedUser, false, null, true);
+            var status = Users.Find(user => user.UserName.Equals(selectedUser)).OnlineStatus;
+            UpdateUserInDB(selectedUser, status, null, true);
             // Update view
             RefreshViewList();
         }

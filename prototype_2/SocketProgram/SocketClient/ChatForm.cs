@@ -23,7 +23,7 @@ namespace SocketClient
         private const string hostName = "127.0.0.1";
 
         /*
-         * note: will fail to load form if message not initialised
+         * note: initial message string required
          */
         string message = "hello";
         public ChatForm()
@@ -39,12 +39,6 @@ namespace SocketClient
             ClientPort = clientPort;
             ServerPort = serverPort;
         }
-
-        //public ChatForm(string userName, int serverPort) : this()
-        //{
-        //    OtherUser = userName;
-        //    ServerPort = serverPort;
-        //}
 
         private void ChatForm_Load(object sender, EventArgs e)
         {
@@ -235,7 +229,7 @@ namespace SocketClient
         private void ConnectButton_Click(object sender, EventArgs e)
         {
             var sb = new StringBuilder();
-            //if (client != null && client.Connected)
+
             if (client != null)
             {
                 client.Close();
@@ -248,13 +242,20 @@ namespace SocketClient
             }
             else
             {
-                client = new TcpClient("127.0.0.1", ClientPort); // A connects to B
-                //client = new TcpClient("127.0.0.1", ServerPort);
-                sb.AppendLine($"// Success! Connected with {OtherUser} on {ClientPort}");
-                textBoxOut.AppendText(sb.ToString());
+                try
+                {
+                    client = new TcpClient("127.0.0.1", ClientPort);
+                    sb.AppendLine($"// Success! Connected with {OtherUser} on {ClientPort}");
+                    textBoxOut.AppendText(sb.ToString());
 
-                topLabel.Text = $"Connected with {OtherUser}";
-                ConnectButton.Text = "Disconnect";
+                    topLabel.Text = $"Connected with {OtherUser}";
+                    ConnectButton.Text = "Disconnect";
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    MessageBox.Show("Other user is not available.");
+                }
             }
         }
 

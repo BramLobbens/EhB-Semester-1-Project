@@ -61,7 +61,16 @@ namespace SocketClient.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Sun 01/12/2020 14:10:56.14 
+        ///   Looks up a localized string similar to Bram Lobbens.
+        /// </summary>
+        public static string Author {
+            get {
+                return ResourceManager.GetString("Author", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sun 01/12/2020 18:35:16.43 
         ///.
         /// </summary>
         public static string BuildDate {
@@ -77,6 +86,24 @@ namespace SocketClient.Properties {
             get {
                 object obj = ResourceManager.GetObject("Comment_16x", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to https://github.com/BramLobbens/EhB-Semester-1-Project/issues.
+        /// </summary>
+        public static string ExternalLinkGitHub_Issues {
+            get {
+                return ResourceManager.GetString("ExternalLinkGitHub_Issues", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Examen_P3_BramLobbens.
+        /// </summary>
+        public static string ProjectName {
+            get {
+                return ResourceManager.GetString("ProjectName", resourceCulture);
             }
         }
     }
