@@ -12,6 +12,7 @@ namespace SocketServer
 {
     class Program
     {
+        private static TcpClient client;
         private const string hostName = "127.0.0.1";
         private static int Port { get; set; }
 
@@ -54,9 +55,10 @@ namespace SocketServer
                  * research notes: currently not working with ipAddress from AddressList
                  */
                 IPAddress tmp_address = IPAddress.Parse(hostName);
-                var server = new TcpListener(tmp_address, Port);
+                var listener = new TcpListener(tmp_address, Port);
+                //var listener = new TcpListener(tmp_address, defaultPort);
 
-                server.Start();
+                listener.Start();
                 Console.WriteLine($"Listening on address: {ipAddress}, port: {Port}");
 
                 // Buffer
@@ -66,45 +68,48 @@ namespace SocketServer
                 // Enter listening loop
                 while (true)
                 {
-                    Console.Write("Waiting for a connection... ");
-
-                    // Perform a blocking call to accept requests.
-                    TcpClient client = server.AcceptTcpClient();
-                    Console.WriteLine("Connected!");
-
                     try
                     {
-                        /*
-                         * research notes: throws error when client closes connection
-                         */
-                        // Get a stream object for reading and writing
-                        NetworkStream stream = client.GetStream();
-
-                        int i;
-                        i = stream.Read(bytes, 0, bytes.Length);
-
-                        while (i != 0)
+                        // Perform a blocking call to accept requests.
+                        if (!listener.Pending())
                         {
 
-                            // Translate data bytes to a ASCII string.
-                            data = System.Text.Encoding.ASCII.GetString(bytes);
-                            Console.WriteLine($"Received: {data}");
-
-                            /*
-                             *  TO-DO: process data
-                             */
-                            data = data.ToUpper();
-                            byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-
-                            // Send back a response.
-                            stream.Write(msg, 0, msg.Length);
-                            Console.WriteLine($"Sent: {data}");
-
-                            i = stream.Read(bytes, 0, bytes.Length);
+                            //Console.WriteLine("Sorry, no connection requests have arrived");
                         }
-                        
-                        // Shutdown and end connection
-                        client.Close();
+                        else
+                        {
+                            client = listener.AcceptTcpClient();
+                            Console.Write("Waiting for a connection... ");
+                            //Console.WriteLine("Connected!");
+
+                            // Get a stream object for reading and writing
+                            NetworkStream stream = client.GetStream();
+
+                            int i;
+                            i = stream.Read(bytes, 0, bytes.Length);
+
+                            while (i != 0)
+                            {
+
+                                // Translate data bytes to a ASCII string.
+                                data = System.Text.Encoding.ASCII.GetString(bytes);
+                                Console.WriteLine($"Received: {data}");
+
+                                /*
+                                 *  TO-DO: process data
+                                 */
+                                data = data.ToUpper();
+                                byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+
+                                // Send back a response.
+                                stream.Write(msg, 0, msg.Length);
+                                Console.WriteLine($"Sent: {data}");
+
+                                i = stream.Read(bytes, 0, bytes.Length);
+                            }
+                            // Shutdown and end connection
+                            client.Close();
+                        }  
                     }
                     catch (Exception ex)
                     {

@@ -64,11 +64,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ProjectDb_BramDataSet.xsd</DependentUpon>
     </Compile>
-    <Compile Include="ProjectDb_BramLocalDataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserNameDialogue.cs">
       <SubType>Form</SubType>
@@ -106,17 +101,6 @@
     <None Include="ProjectDb_BramDataSet.xss">
       <DependentUpon>ProjectDb_BramDataSet.xsd</DependentUpon>
     </None>
-    <None Include="ProjectDb_BramLocalDataSet.xsc">
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </None>
-    <None Include="ProjectDb_BramLocalDataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>ProjectDb_BramLocalDataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ProjectDb_BramLocalDataSet.xss">
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -131,16 +115,19 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Comment_16x.png" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\SocketServer\SocketServer.csproj">
       <Project>{429861ef-cedd-413b-9af3-b5fa305c3f22}</Project>
       <Name>SocketServer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Comment_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\ProjectIcon.ico" />
+    <None Include="Resources\BuildDate.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>echo %25date%25 %25time%25 &gt; "$(ProjectDir)\Resources\BuildDate.txt"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

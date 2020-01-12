@@ -93,7 +93,7 @@
             this.portValue.Size = new System.Drawing.Size(176, 23);
             this.portValue.TabIndex = 2;
             this.portValue.Value = new decimal(new int[] {
-            1111,
+            8888,
             0,
             0,
             0});
@@ -106,9 +106,9 @@
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.Location = new System.Drawing.Point(77, 152);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(104, 20);
+            this.label2.Size = new System.Drawing.Size(148, 20);
             this.label2.TabIndex = 5;
-            this.label2.Text = "Select a Port:";
+            this.label2.Text = "Select a Client Port:";
             this.label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // UserNameDialogue

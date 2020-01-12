@@ -21,10 +21,12 @@ namespace SocketClient
             public bool OnlineStatus { get; set; }
             public int? Port { get; set; }
             public DateTime? LastOnline { get; set; }
+            public bool Favorited { get; set; }
         }
 
         public string ConnectionString { get; set; }
         public List<User> Users { get; set; }
+        public List<User> Favorites { get; set; }
         public string CurrentUserName { get; set; }
         public int CurrentPort { get; set; }
 
@@ -33,6 +35,7 @@ namespace SocketClient
             InitializeComponent();
             this.FormClosing += MainForm_FormClosing;
             Users = new List<User>();
+            Favorites = new List<User>();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -47,6 +50,8 @@ namespace SocketClient
                     userNameLabel.Text += " " + CurrentUserName;
                     RefreshViewList();
                     toolStripStatusLabel1.Text = $"Connected on port: {CurrentPort}";
+                    tabControl1.TabPages[0].Text = "All";
+                    tabControl1.TabPages[1].Text = "Favorites";
                 }
                 catch (Exception ex)
                 {
@@ -68,7 +73,10 @@ namespace SocketClient
                                                 " , [OnlineStatus]" +
                                                 " , [Port]" +
                                                 " , [OnlineDate]" +
-                                                " from [Users]",
+                                                " , [Favorited]" +
+                                                " from [Users] as u" +
+                                                " inner join [Favorites] as f" +
+                                                " on u.Id = f.UserId",
                                                 connection);
                     // Open connection
                     connection.Open();
@@ -78,13 +86,13 @@ namespace SocketClient
                     {
                         while (reader.Read())
                         {
-                            // User Name
+                            // 1. User Name
                             string userName = reader[0].ToString();
 
-                            // Online Status
+                            // 2. Online Status
                             bool onlineStatus = reader.GetBoolean(1);
                             
-                            // Port
+                            // 3. Port
                             int number;
                             int? port;
                             if (Int32.TryParse(reader[2].ToString(), out number))
@@ -96,11 +104,14 @@ namespace SocketClient
                                 port = null;
                             }
 
-                            // Last Online Date
+                            // 4. Last Online Date
                             int x = reader.GetOrdinal("OnlineDate");
                             DateTime? onlineDate = reader.IsDBNull(x) ? (DateTime?)null : reader.GetDateTime(x);
 
-                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port, LastOnline = onlineDate });
+                            // 5. Favorited
+                            bool favorited = reader.GetBoolean(4);
+
+                            users.Add(new User { UserName = userName, OnlineStatus = onlineStatus, Port = port, LastOnline = onlineDate, Favorited = favorited });
                         }
                     }
                 }
@@ -120,6 +131,7 @@ namespace SocketClient
             {
                 try
                 {
+                    // Users Table
                     var command = new SqlCommand("insert into [Users] ([Username], [OnlineStatus], [Port])" +
                                                 " values (@UserName, @Status, @Port)",
                                                 connection);
@@ -129,9 +141,17 @@ namespace SocketClient
                     command.Parameters.AddWithValue("@Status", status);
                     command.Parameters.AddWithValue("@Port", port);
 
+                    // Update Favorites Table
+                    var command2 = new SqlCommand("insert into [Favorites] ([UserId])" +
+                                                 " select u.Id" +
+                                                 " from Users as u" +
+                                                 " where not exists (select f.UserId from Favorites as f where f.UserId = u.Id)",
+                                                 connection);
+
                     // Open connection and execute INSERT
                     connection.Open();
                     command.ExecuteNonQuery();
+                    command2.ExecuteNonQuery();
                 }
                 catch (Exception err)
                 {
@@ -141,12 +161,13 @@ namespace SocketClient
             }
         }
 
-        private void UpdateUserInDB(string userName, bool status, int? port)
+        private void UpdateUserInDB(string userName, bool status, int? port, bool favorited=false)
         {
             using (var connection = new SqlConnection(ConnectionString))
             {
                 try
                 {
+                    // Update Users table
                     var command = new SqlCommand("update [Users]" +
                                                 " set [OnlineStatus] = @Status," +
                                                 " [Port] = @Port," +
@@ -160,9 +181,21 @@ namespace SocketClient
                     command.Parameters.AddWithValue("@Port", (object)port ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Date", DateTime.Now);
 
+                    // Update Favorites
+                    var command2 = new SqlCommand("update [Favorites]" +
+                                                 " set [Favorited] = @Favorited" +
+                                                 " where UserId =" +
+                                                 " (select u.Id from Users as u where u.UserName = @UserName)",
+                                                 connection);
+
+                    // Define parameters and their values
+                    command2.Parameters.AddWithValue("@Favorited", favorited);
+                    command2.Parameters.AddWithValue("@UserName", userName);
+
                     // Open connection and execute UPDATE
                     connection.Open();
                     command.ExecuteNonQuery();
+                    command2.ExecuteNonQuery();
                 }
                 catch (Exception err)
                 {
@@ -205,6 +238,9 @@ namespace SocketClient
                         {
                             SetUserInDB(CurrentUserName, true, CurrentPort);
                         }
+
+                        // Set favorites
+                        Users.Where(user => user.Favorited).ToList().ForEach(user => Favorites.Add(user));
                     }
                     catch (Exception ex)
                     {
@@ -230,8 +266,12 @@ namespace SocketClient
 
         private void RefreshViewList()
         {
+            // Clear data
             listView1.Clear();
+            listView2.Clear();
             Users.Clear();
+            Favorites.Clear();
+
             // Load users from Database
             Users.AddRange(GetUsersFromDB());
             // Sort by online status
@@ -249,8 +289,25 @@ namespace SocketClient
                 li.ToolTipText = $"{(user.OnlineStatus ? "" : $"User was last online on: {date}")}";
                 listView1.Items.Add(li);
             }
+
+            Users.Where(user => user.Favorited).ToList().ForEach(user => Favorites.Add(user));
+            // Format
+            foreach (User user in Favorites)
+            {
+                var li = new ListViewItem((user.OnlineStatus) ? $"{user.UserName}" : $"{user.UserName} (offline)");
+                if (user.OnlineStatus)
+                {
+                    li.ForeColor = Color.FromArgb(32, 214, 4);
+                    li.Font = new Font("Microsoft Sans Serif", 10, FontStyle.Bold);
+                }
+                string date = (user.LastOnline != null) ? $"{user.LastOnline:yyyy/MM/dd}" : "unknown";
+                li.ToolTipText = $"{(user.OnlineStatus ? "" : $"User was last online on: {date}")}";
+                listView2.Items.Add(li);
+            }
+
             // Update view
             listView1.Refresh();
+            listView2.Refresh();
         }
 
         private void UserListView_DoubleClick(object sender, EventArgs e)
@@ -303,7 +360,6 @@ namespace SocketClient
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                // Silent
             }
         }
 
@@ -313,9 +369,9 @@ namespace SocketClient
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Programmeren 3 - School year 2019-2020");
-            sb.AppendLine("By Bram Lobbens");
-            sb.AppendLine("Latest update: 2020/01/11");
+            sb.AppendLine("Programmeren 3 - 2019-2020\n");
+            sb.AppendLine("Author: Bram Lobbens");
+            sb.AppendLine($"Latest Build: {Properties.Resources.BuildDate}");
             MessageBox.Show(sb.ToString(), "About");
         }
 
@@ -334,6 +390,18 @@ namespace SocketClient
         private void reportAProblemToolStripMenuItem_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/BramLobbens/EhB-Semester-1-Project/issues");
+        }
+
+        /*
+         * Context Menu
+         */
+        private void setAsFavoriteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Set selected user as a favorite
+            var selectedUser = listView1.SelectedItems[0].Text.Split()[0];
+            UpdateUserInDB(selectedUser, false, null, true);
+            // Update view
+            RefreshViewList();
         }
     }
 }

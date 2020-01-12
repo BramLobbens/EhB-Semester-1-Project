@@ -59,16 +59,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="ProjectDb_BramDataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ProjectDb_BramDataSet.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="ProjectDb_BramLocalDataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -78,41 +68,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="ProjectDb_BramDataSet.xsc">
-      <DependentUpon>ProjectDb_BramDataSet.xsd</DependentUpon>
-    </None>
-    <None Include="ProjectDb_BramDataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>ProjectDb_BramDataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ProjectDb_BramDataSet.xss">
-      <DependentUpon>ProjectDb_BramDataSet.xsd</DependentUpon>
-    </None>
-    <None Include="ProjectDb_BramLocalDataSet.xsc">
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </None>
-    <None Include="ProjectDb_BramLocalDataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>ProjectDb_BramLocalDataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="ProjectDb_BramLocalDataSet.xss">
-      <DependentUpon>ProjectDb_BramLocalDataSet.xsd</DependentUpon>
-    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="ProjectDb_BramLocal.mdf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ProjectDb_BramLocal_log.ldf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <DependentUpon>ProjectDb_BramLocal.mdf</DependentUpon>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

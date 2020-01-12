@@ -36,50 +36,50 @@
             this.label2 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // textBox1
+            // textBoxOut
             // 
             this.textBoxOut.BackColor = System.Drawing.SystemColors.Window;
             this.textBoxOut.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBoxOut.Location = new System.Drawing.Point(12, 51);
             this.textBoxOut.Multiline = true;
-            this.textBoxOut.Name = "textBox1";
+            this.textBoxOut.Name = "textBoxOut";
             this.textBoxOut.ReadOnly = true;
             this.textBoxOut.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.textBoxOut.Size = new System.Drawing.Size(422, 245);
             this.textBoxOut.TabIndex = 0;
             // 
-            // textBox2
+            // textBoxIn
             // 
             this.textBoxIn.Location = new System.Drawing.Point(12, 377);
-            this.textBoxIn.Name = "textBox2";
+            this.textBoxIn.Name = "textBoxIn";
             this.textBoxIn.Size = new System.Drawing.Size(422, 20);
             this.textBoxIn.TabIndex = 1;
             this.textBoxIn.TextChanged += new System.EventHandler(this.TextBoxIn_TextChanged);
             this.textBoxIn.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TextBoxIn_KeyPress);
             // 
-            // button1
+            // sendMessageButton
             // 
             this.sendMessageButton.Location = new System.Drawing.Point(335, 415);
-            this.sendMessageButton.Name = "button1";
+            this.sendMessageButton.Name = "sendMessageButton";
             this.sendMessageButton.Size = new System.Drawing.Size(99, 23);
             this.sendMessageButton.TabIndex = 2;
             this.sendMessageButton.Text = "Send message";
             this.sendMessageButton.UseVisualStyleBackColor = true;
             this.sendMessageButton.Click += new System.EventHandler(this.SendMessageButton_Click);
             // 
-            // label1
+            // topLabel
             // 
             this.topLabel.AutoSize = true;
             this.topLabel.Location = new System.Drawing.Point(9, 18);
-            this.topLabel.Name = "label1";
+            this.topLabel.Name = "topLabel";
             this.topLabel.Size = new System.Drawing.Size(35, 13);
             this.topLabel.TabIndex = 3;
             this.topLabel.Text = "label1";
             // 
-            // button2
+            // ConnectButton
             // 
             this.ConnectButton.Location = new System.Drawing.Point(15, 415);
-            this.ConnectButton.Name = "button2";
+            this.ConnectButton.Name = "ConnectButton";
             this.ConnectButton.Size = new System.Drawing.Size(99, 23);
             this.ConnectButton.TabIndex = 4;
             this.ConnectButton.Text = "Disconnect";
@@ -95,7 +95,7 @@
             this.label2.TabIndex = 5;
             this.label2.Text = "Enter message:";
             // 
-            // Form1
+            // ChatForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -108,8 +108,8 @@
             this.Controls.Add(this.textBoxIn);
             this.Controls.Add(this.textBoxOut);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Name = "Form1";
-            this.Text = "ClientSocket";
+            this.Name = "ChatForm";
+            this.Text = "Chat Window";
             this.Load += new System.EventHandler(this.ChatForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
